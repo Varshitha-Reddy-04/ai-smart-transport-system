@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="AI-Powered Smart Transport Dashboard - Real-time traffic intelligence, route optimization & multi-modal planning">
+    <title>Smart Transit AI — Intelligent Transport Dashboard</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loader-content">
+            <div class="loader-ring"></div>
+            <h2>Smart Transit AI</h2>
+            <p>Initializing city simulation...</p>
+        </div>
+    </div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon-wrap">
+                        <span class="logo-icon">🚗</span>
+                    </div>
+                    <div>
+                        <h1>Smart Transit AI</h1>
+                        <span class="logo-sub">Intelligent Transport Platform</span>
+                    </div>
+                </div>
+                <button class="sidebar-toggle" id="sidebar-toggle" title="Collapse sidebar">☰</button>
+            </div>
+
+            <div class="sidebar-scroll">
+                <!-- Live Stats -->
+                <section class="panel status-panel">
+                    <div class="panel-header">
+                        <h3>🌐 City Status</h3>
+                        <span class="badge live-badge">LIVE</span>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card" id="congestion-card">
+                            <div class="stat-icon">🚦</div>
+                            <div class="stat-info">
+                                <span class="stat-label">Congestion</span>
+                                <span class="stat-value" id="congestion-value">—</span>
+                            </div>
+                            <div class="stat-bar"><div class="stat-bar-fill" id="congestion-bar"></div></div>
+                        </div>
+                        <div class="stat-card" id="toll-card">
+                            <div class="stat-icon">💰</div>
+                            <div class="stat-info">
+                                <span class="stat-label">Toll Surge</span>
+                                <span class="stat-value" id="toll-value">1.0x</span>
+                            </div>
+                            <div class="stat-bar"><div class="stat-bar-fill surge" id="toll-bar"></div></div>
+                        </div>
+                        <div class="stat-card" id="bus-card">
+                            <div class="stat-icon">🚌</div>
+                            <div class="stat-info">
+                                <span class="stat-label">Active Buses</span>
+                                <span class="stat-value" id="bus-count">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card" id="ev-card">
+                            <div class="stat-icon">⚡</div>
+                            <div class="stat-info">
+                                <span class="stat-label">EV Chargers</span>
+                                <span class="stat-value" id="ev-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Layer Controls -->
+                <section class="panel">
+                    <div class="panel-header">
+                        <h3>🗺️ Map Layers</h3>
+                    </div>
+                    <div class="layer-controls">
+                        <button class="layer-btn active" id="btn-traffic" onclick="toggleLayer('traffic')">
+                            <span class="layer-icon">🚦</span>
+                            <span class="layer-text">Traffic & Signals</span>
+                            <span class="layer-toggle"></span>
+                        </button>
+                        <button class="layer-btn" id="btn-transit" onclick="toggleLayer('transit')">
+                            <span class="layer-icon">🚌</span>
+                            <span class="layer-text">Public Transit</span>
+                            <span class="layer-toggle"></span>
+                        </button>
+                        <button class="layer-btn" id="btn-parking" onclick="toggleLayer('parking')">
+                            <span class="layer-icon">⚡</span>
+                            <span class="layer-text">EV & Parking</span>
+                            <span class="layer-toggle"></span>
+                        </button>
+                        <button class="layer-btn" id="btn-safety" onclick="toggleLayer('safety')">
+                            <span class="layer-icon">⚠️</span>
+                            <span class="layer-text">Safety Risks</span>
+                            <span class="layer-toggle"></span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Route Planner -->
+                <section class="panel route-panel">
+                    <div class="panel-header">
+                        <h3>🧭 AI Route Planner</h3>
+                    </div>
+                    <p class="panel-desc">Click <strong>"Plan Route"</strong>, then select two points on the map. Our AI engine uses Dijkstra's algorithm with live traffic weights.</p>
+                    
+                    <div class="route-options">
+                        <label class="checkbox-wrap">
+                            <input type="checkbox" id="opt-safety">
+                            <span class="checkmark"></span>
+                            Prioritize Safety
+                        </label>
+                        <label class="checkbox-wrap">
+                            <input type="checkbox" id="opt-tolls">
+                            <span class="checkmark"></span>
+                            Avoid Tolls
+                        </label>
+                    </div>
+
+                    <button id="planRouteBtn" class="primary-btn">
+                        <span class="btn-icon">🗺️</span> Plan Route
+                    </button>
+                    <button id="clearRouteBtn" class="secondary-btn" style="display:none;">
+                        <span class="btn-icon">✕</span> Clear Route
+                    </button>
+
+                    <div id="route-stats" class="route-results hidden">
+                        <!-- populated via JS -->
+                    </div>
+                </section>
+
+                <!-- Rideshare Matches -->
+                <section class="panel" id="rideshare-panel" style="display:none;">
+                    <div class="panel-header">
+                        <h3>🤝 Ride-Share Matches</h3>
+                    </div>
+                    <ul id="match-list" class="match-list"></ul>
+                </section>
+            </div>
+            
+            <div class="sidebar-footer">
+                <span>© 2026 Smart Transit AI</span>
+            </div>
+        </aside>
+
+        <!-- Main Map Area -->
+        <main class="map-area">
+            <div id="map"></div>
+            
+            <!-- Floating info chips -->
+            <div class="map-chips">
+                <div class="chip" id="chip-mode">
+                    <span class="chip-dot"></span>
+                    <span id="chip-text">San Francisco Simulation</span>
+                </div>
+            </div>
+
+            <!-- Notification Toast -->
+            <div id="toast" class="toast hidden">
+                <span id="toast-msg"></span>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <script src="/static/app.js"></script>
+</body>
+</html>
